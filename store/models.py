@@ -42,7 +42,8 @@ class Florist(models.Model):
     client_key = models.ForeignKey(
         "Client",
         on_delete=models.CASCADE,
-        null=True
+        null=True,
+        blank=True,
     )
 
 
@@ -54,7 +55,8 @@ class Courier(models.Model):
     client_key = models.ForeignKey(
         "Client",
         on_delete=models.CASCADE,
-        null=True
+        null=True,
+        blank=True,
     )
 
 
