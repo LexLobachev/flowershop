@@ -75,7 +75,7 @@ class Client(models.Model):
         help_text='ул. Пушкина, д.103, кв.56'
     )
     delivery_datetime = models.DateTimeField(
-        name="Дата и время доставки"
+        verbose_name="Дата и время доставки"
     )
     florist_key = models.ForeignKey(
         "Florist",
