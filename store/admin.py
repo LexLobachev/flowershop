@@ -5,7 +5,7 @@ from store.models import Posy, Florist, Courier, Client
 
 @admin.register(Posy)
 class PosyAdmin(admin.ModelAdmin):
-    list_display = ('title', 'cause', 'price', 'description', 'picture', 'composition')
+    list_display = ('id', 'title', 'cause', 'price', 'description', 'picture', 'composition')
     list_filter = ('title', 'cause', 'price')
 
 
