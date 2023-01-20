@@ -64,71 +64,92 @@ def handle_occation(call):
         markup = types.InlineKeyboardMarkup(row_width=3)
         for price in prices:
             markup.add(types.InlineKeyboardButton(f'{price}', callback_data=f'price {price}'))
-        bot.send_message(call.message.chat.id, 'Вы готовитесь ко дню рождения, на какую сумму вы рассчитываете?',
+        message = bot.send_message(call.message.chat.id, 'Вы готовитесь ко дню рождения, на какую сумму вы рассчитываете?',
                          parse_mode='html', reply_markup=markup)
     elif call.data == 'occ_wedding':
         markup = types.InlineKeyboardMarkup(row_width=3)
         for price in prices:
             markup.add(types.InlineKeyboardButton(f'{price}', callback_data=f'price {price}'))
-        bot.send_message(call.message.chat.id, 'Вы готовитесь к свадьбе, на какую сумму вы рассчитываете?',
+        message = bot.send_message(call.message.chat.id, 'Вы готовитесь к свадьбе, на какую сумму вы рассчитываете?',
                          parse_mode='html', reply_markup=markup)
     elif call.data == 'occ_school':
         markup = types.InlineKeyboardMarkup(row_width=3)
         for price in prices:
             markup.add(types.InlineKeyboardButton(f'{price}', callback_data=f'price {price}'))
-        bot.send_message(call.message.chat.id, 'Вы готовитесь к школе, на какую сумму вы рассчитываете?',
+        message = bot.send_message(call.message.chat.id, 'Вы готовитесь к школе, на какую сумму вы рассчитываете?',
                          parse_mode='html', reply_markup=markup)
     elif call.data == 'occ_other':
         markup = types.InlineKeyboardMarkup(row_width=3)
-        for price in prices:
-            markup.add(types.InlineKeyboardButton(f'{price}', callback_data=f'price {price}'))
-        bot.send_message(call.message.chat.id, 'У вас другой повод, на какую сумму вы рассчитываете?',
+        message_to_customer = 'Опишите кратко Ваш случай.'
+        message = bot.send_message(call.message.chat.id, message_to_customer,
                          parse_mode='html', reply_markup=markup)
+        bot.register_next_step_handler(message, handle_other_occation)
+
+
+@bot.message_handler(content_types=['text'])
+def handle_other_occation(message):
+    prices = [
+        '~500', '~1000', '~2000', 'больше', 'не важно'
+    ]
+    saved_user_message = message.text
+    print(saved_user_message)
+    message_to_customer = 'Спасибо за информацию, постараемся подобрать Вам соответствующий букет. Подскажите, на какую сумму Вы рассчитываете?'
+    markup = types.InlineKeyboardMarkup(row_width=3)
+    for price in prices:
+        markup.add(types.InlineKeyboardButton(f'{price}', callback_data=f'price {price}'))
+    bot.send_message(message.chat.id, message_to_customer, parse_mode='html', reply_markup=markup)
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('price'))
 def handle_price(call):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1, one_time_keyboard=True)
     order = types.KeyboardButton(text='Заказать букет')
-    other = types.KeyboardButton(text='Другое')
+    other = types.KeyboardButton(text='Не подходит')
     markup.add(order, other)
     if call.data == 'price ~500':
         posy = Posy.objects.get(id=1)
         pic_number = posy.id
         real_price = posy.price
         send_image(bot, call, pic_number)
-        bot.send_message(call.message.chat.id, f'Ваш букет, стоимостью {real_price}', parse_mode='html', reply_markup=markup)
+        message = bot.send_message(call.message.chat.id, f'Ваш букет, стоимостью {real_price}', parse_mode='html', reply_markup=markup)
+        bot.register_next_step_handler(message, handle_bouquet)
     elif call.data == 'price ~1000':
         posy = Posy.objects.get(id=2)
         pic_number = posy.id
         real_price = posy.price
         send_image(bot, call, pic_number)
-        bot.send_message(call.message.chat.id, f'Ваш букет, стоимостью {real_price}', parse_mode='html', reply_markup=markup)
+        message = bot.send_message(call.message.chat.id, f'Ваш букет, стоимостью {real_price}', parse_mode='html', reply_markup=markup)
+        bot.register_next_step_handler(message, handle_bouquet)
     elif call.data == 'price ~2000':
         posy = Posy.objects.get(id=3)
         pic_number = posy.id
         real_price = posy.price
         send_image(bot, call, pic_number)
-        bot.send_message(call.message.chat.id, f'Ваш букет, стоимостью {real_price}', parse_mode='html', reply_markup=markup)
+        message =bot.send_message(call.message.chat.id, f'Ваш букет, стоимостью {real_price}', parse_mode='html', reply_markup=markup)
+        bot.register_next_step_handler(message, handle_bouquet)
     elif call.data == 'price больше':
         posy = Posy.objects.get(id=4)
         pic_number = posy.id
         real_price = posy.price
         send_image(bot, call, pic_number)
-        bot.send_message(call.message.chat.id, f'Ваш букет, стоимостью {real_price}', parse_mode='html', reply_markup=markup)
+        message = bot.send_message(call.message.chat.id, f'Ваш букет, стоимостью {real_price}', parse_mode='html', reply_markup=markup)
+        bot.register_next_step_handler(message, handle_bouquet)
     elif call.data == 'price не важно':
         posy = Posy.objects.get(id=5)
         pic_number = posy.id
         real_price = posy.price
         send_image(bot, call, pic_number)
-        bot.send_message(call.message.chat.id, f'Ваш букет, стоимостью {real_price}', parse_mode='html', reply_markup=markup)
+        message = bot.send_message(call.message.chat.id, f'Ваш букет, стоимостью {real_price}', parse_mode='html', reply_markup=markup)
+        bot.register_next_step_handler(message, handle_bouquet)
 
 
 @bot.message_handler(content_types=['text'])
 def handle_bouquet(message):
     if message.text == 'Заказать букет':
-        bot.send_message(message.chat.id, f'Ваш заказ будет передан курьеру. Напишите ваши данные: имя, адрес, предпочтительное время доставки.')
-    elif message.text == 'Другое':
+        message = bot.send_message(message.chat.id, f'Ваш заказ будет передан курьеру. Напишите ваши данные. Имя:',
+                                   parse_mode='html')
+        bot.register_next_step_handler(message, handle_user_name)
+    elif message.text == 'Не подходит':
         message_to_customer = 'Хотите что-то еще более уникальное? Подберите другой букет из нашей коллекции или закажите консультацию флориста.'
         markup = types.InlineKeyboardMarkup(row_width=1)
         consultation = types.InlineKeyboardButton(text='Консультация специалиста', callback_data='fin_consultation')
@@ -138,10 +159,34 @@ def handle_bouquet(message):
         bot.send_message(message.chat.id, message_to_customer, parse_mode='html', reply_markup=markup)
 
 
+@bot.message_handler(content_types=['text'])
+def handle_user_name(message):
+    print(message.text)
+    message = bot.send_message(message.chat.id, f'Адрес: ',
+                               parse_mode='html')
+    bot.register_next_step_handler(message, handle_user_adress)
+
+
+@bot.message_handler(content_types=['text'])
+def handle_user_adress(message):
+    message = bot.send_message(message.chat.id, f'Желаемое время доставки',
+                               parse_mode='html')
+    bot.register_next_step_handler(message, handle_user_delivery_time)
+
+
+@bot.message_handler(content_types=['text'])
+def handle_user_delivery_time(message):
+    message = bot.send_message(message.chat.id, f'Спасибо за Ваш заказ. Если хотиете сделать друго, напишите сообщение: "/start" ',
+                               parse_mode='html')
+    bot.register_next_step_handler(message, start)
+
+
 @bot.callback_query_handler(func=lambda call: call.data.startswith('fin'))
-def handle_price(call):
+def handle_not_aproach(call):
     if call.data == 'fin_consultation':
-        bot.send_message(call.message.chat.id, 'Укажите номер телефона, и наш флорист перезвонит Вам в течение 20 минут.', parse_mode='html')
+        message_to_customer = 'Укажите номер телефона, и наш флорист перезвонит Вам в течение 20 минут.'
+        message = bot.send_message(call.message.chat.id, message_to_customer, parse_mode='html')
+        bot.register_next_step_handler(message, handle_user_phone_number)
     elif call.data == 'fin_collection':
         bot.send_message(call.message.chat.id, 'Готовые букеты для вас:')
         for key, value in ready_made_posys().items():
@@ -153,8 +198,33 @@ def handle_price(call):
                     photo=posting_file,
                     caption=f"{key}. {value['title']} \nЦена: {str(value['price'])} руб."
                 )
+        pic_quantity = 5
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2, one_time_keyboard=True)
+        for pic_number in range(1, pic_quantity+1):
+            send_image(bot, call, str(pic_number))
+            markup.add(types.KeyboardButton(text=f'{pic_number}'))
+        message = bot.send_message(call.message.chat.id, 'Какой из предложенных будетов Вас интересует?', reply_markup=markup)
+        bot.register_next_step_handler(message, handle_user_choise)
     elif call.data == 'fin_cancel':
-        bot.send_message(call.message.chat.id, 'Если хотите выбрать другой букет, напишите сообщение "/start".')
+        message = bot.send_message(call.message.chat.id, 'Если хотите выбрать другой букет, напишите сообщение "/start".')
+        bot.register_next_step_handler(message, start)
+
+
+@bot.message_handler(content_types=['text'])
+def handle_user_choise(message):
+    choises = set('12345')
+    if  any((choise in choises) for choise in message.text):
+        script_path = pathlib.Path.cwd()
+        file_path = script_path.joinpath(f'media/posy_{message.text}.jpg')
+        with open(file_path, 'rb') as posting_file:
+            bot.send_photo(chat_id=message.chat.id, photo=posting_file)
+        message = bot.send_message(message.chat.id, 'Ваш букет',
+                         parse_mode='html')
+
+
+@bot.message_handler(content_types=['text'])
+def handle_user_phone_number(message):
+    print('работает, накинуть функционал!')
 
 
 if __name__ == "__main__":
