@@ -177,8 +177,9 @@ def handle_user_choise(message):
         file_path = script_path.joinpath(f'media/posy_{message.text}.jpg')
         with open(file_path, 'rb') as posting_file:
             bot.send_photo(chat_id=message.chat.id, photo=posting_file)
-        message = bot.send_message(message.chat.id, 'Ваш букет',
+        message = bot.send_message(message.chat.id, 'Ваш букет. Если хотите выбрать другой букет, напишите сообщение "/start"',
                          parse_mode='html')
+        bot.register_next_step_handler(message, start)
 
 
 @bot.message_handler(content_types=['text'])
