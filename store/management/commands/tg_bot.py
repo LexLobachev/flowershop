@@ -188,6 +188,7 @@ def handle_not_aproach(call):
         message = bot.send_message(call.message.chat.id, message_to_customer, parse_mode='html')
         bot.register_next_step_handler(message, handle_user_phone_number)
     elif call.data == 'fin_collection':
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2, one_time_keyboard=True)
         bot.send_message(call.message.chat.id, 'Готовые букеты для вас:')
         for key, value in ready_made_posys().items():
             script_path = pathlib.Path.cwd()
@@ -198,11 +199,7 @@ def handle_not_aproach(call):
                     photo=posting_file,
                     caption=f"{key}. {value['title']} \nЦена: {str(value['price'])} руб."
                 )
-        pic_quantity = 5
-        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2, one_time_keyboard=True)
-        for pic_number in range(1, pic_quantity+1):
-            send_image(bot, call, str(pic_number))
-            markup.add(types.KeyboardButton(text=f'{pic_number}'))
+                markup.add(types.KeyboardButton(text=f'{key}'))
         message = bot.send_message(call.message.chat.id, 'Какой из предложенных будетов Вас интересует?', reply_markup=markup)
         bot.register_next_step_handler(message, handle_user_choise)
     elif call.data == 'fin_cancel':
@@ -218,8 +215,9 @@ def handle_user_choise(message):
         file_path = script_path.joinpath(f'media/posy_{message.text}.jpg')
         with open(file_path, 'rb') as posting_file:
             bot.send_photo(chat_id=message.chat.id, photo=posting_file)
-        message = bot.send_message(message.chat.id, 'Ваш букет',
+        message = bot.send_message(message.chat.id, 'Ваш букет. Если хотите выбрать другой букет, напишите сообщение "/start"',
                          parse_mode='html')
+        bot.register_next_step_handler(message, start)
 
 
 @bot.message_handler(content_types=['text'])
