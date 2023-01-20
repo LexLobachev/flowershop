@@ -1,0 +1,161 @@
+import telebot
+import os
+import pathlib
+
+from telebot import types
+from dotenv import load_dotenv
+from store.models import Posy, Florist, Courier, Client
+
+from django.core.management.base import BaseCommand
+
+
+class Command(BaseCommand):
+    help = 'TG BOT'
+
+    def handle(self, *args, **kwargs):
+        bot.enable_save_next_step_handlers(delay=2)
+        bot.load_next_step_handlers()
+        bot.infinity_polling()
+
+
+load_dotenv()
+access_token = os.environ['TG_API_KEY']
+bot = telebot.TeleBot(access_token)
+
+
+def ready_made_posys():
+    ready_posys = {}
+    for num, posy in enumerate(Posy.objects.order_by('id')[:5]):
+        ready_posys[num+1] = {
+            "title": posy.title,
+            "picture": posy.picture,
+            "description": posy.description,
+            "price": posy.price,
+        }
+    return ready_posys
+
+
+def send_image(bot, call, pic_number):
+    script_path = pathlib.Path.cwd()
+    file_path = script_path.joinpath(f'flowershop/media/posy_{pic_number}.jpg')
+    with open(file_path, 'rb') as posting_file:
+        bot.send_photo(chat_id=call.message.chat.id, photo=posting_file)
+
+
+@bot.message_handler(commands=['start'])
+def start(message):
+    message_to_customer = f'<b>{message.from_user.first_name}</b>, к какому событию готовитесь? Выберите один из вариантов, либо укажите свой'
+    markup = types.InlineKeyboardMarkup()
+    bday_button = types.InlineKeyboardButton('День рождения', callback_data= 'occ_birthday')
+    wedding_button = types.InlineKeyboardButton('Свадьба', callback_data= 'occ_wedding')
+    school_button = types.InlineKeyboardButton('Школа', callback_data= 'occ_school')
+    other_occation_button = types.InlineKeyboardButton('Другой повод', callback_data= 'occ_other')
+    markup.add(bday_button, wedding_button, school_button, other_occation_button)
+    bot.send_message(message.chat.id, message_to_customer, 
+                      parse_mode='html', reply_markup=markup)
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith('occ'))
+def handle_occation(call):
+    prices = [
+        '~500', '~1000', '~2000', 'больше', 'не важно'
+        ]
+    if call.data == 'occ_birthday':
+        markup = types.InlineKeyboardMarkup(row_width=3)
+        for price in prices:
+            markup.add(types.InlineKeyboardButton(f'{price}', callback_data=f'price {price}'))
+        bot.send_message(call.message.chat.id, 'Вы готовитесь ко дню рождения, на какую сумму вы рассчитываете?',
+                         parse_mode='html', reply_markup=markup)
+    elif call.data == 'occ_wedding':
+        markup = types.InlineKeyboardMarkup(row_width=3)
+        for price in prices:
+            markup.add(types.InlineKeyboardButton(f'{price}', callback_data=f'price {price}'))
+        bot.send_message(call.message.chat.id, 'Вы готовитесь к свадьбе, на какую сумму вы рассчитываете?',
+                         parse_mode='html', reply_markup=markup)
+    elif call.data == 'occ_school':
+        markup = types.InlineKeyboardMarkup(row_width=3)
+        for price in prices:
+            markup.add(types.InlineKeyboardButton(f'{price}', callback_data=f'price {price}'))
+        bot.send_message(call.message.chat.id, 'Вы готовитесь к школе, на какую сумму вы рассчитываете?',
+                         parse_mode='html', reply_markup=markup)
+    elif call.data == 'occ_other':
+        markup = types.InlineKeyboardMarkup(row_width=3)
+        for price in prices:
+            markup.add(types.InlineKeyboardButton(f'{price}', callback_data=f'price {price}'))
+        bot.send_message(call.message.chat.id, 'У вас другой повод, на какую сумму вы рассчитываете?',
+                         parse_mode='html', reply_markup=markup)
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith('price'))
+def handle_price(call):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1, one_time_keyboard=True)
+    order = types.KeyboardButton(text='Заказать букет')
+    other = types.KeyboardButton(text='Другое')
+    markup.add(order, other)
+    if call.data == 'price ~500':
+        posy = Posy.objects.get(id=1)
+        pic_number = posy.id
+        real_price = posy.price
+        send_image(bot, call, pic_number)
+        bot.send_message(call.message.chat.id, f'Ваш букет, стоимостью {real_price}', parse_mode='html', reply_markup=markup)
+    elif call.data == 'price ~1000':
+        posy = Posy.objects.get(id=2)
+        pic_number = posy.id
+        real_price = posy.price
+        send_image(bot, call, pic_number)
+        bot.send_message(call.message.chat.id, f'Ваш букет, стоимостью {real_price}', parse_mode='html', reply_markup=markup)
+    elif call.data == 'price ~2000':
+        posy = Posy.objects.get(id=3)
+        pic_number = posy.id
+        real_price = posy.price
+        send_image(bot, call, pic_number)
+        bot.send_message(call.message.chat.id, f'Ваш букет, стоимостью {real_price}', parse_mode='html', reply_markup=markup)
+    elif call.data == 'price больше':
+        posy = Posy.objects.get(id=4)
+        pic_number = posy.id
+        real_price = posy.price
+        send_image(bot, call, pic_number)
+        bot.send_message(call.message.chat.id, f'Ваш букет, стоимостью {real_price}', parse_mode='html', reply_markup=markup)
+    elif call.data == 'price не важно':
+        posy = Posy.objects.get(id=5)
+        pic_number = posy.id
+        real_price = posy.price
+        send_image(bot, call, pic_number)
+        bot.send_message(call.message.chat.id, f'Ваш букет, стоимостью {real_price}', parse_mode='html', reply_markup=markup)
+
+
+@bot.message_handler(content_types=['text'])
+def handle_bouquet(message):
+    if message.text == 'Заказать букет':
+        bot.send_message(message.chat.id, f'Ваш заказ будет передан курьеру. Напишите ваши данные: имя, адрес, предпочтительное время доставки.')
+    elif message.text == 'Другое':
+        message_to_customer = 'Хотите что-то еще более уникальное? Подберите другой букет из нашей коллекции или закажите консультацию флориста.'
+        markup = types.InlineKeyboardMarkup(row_width=1)
+        consultation = types.InlineKeyboardButton(text='Консультация специалиста', callback_data='fin_consultation')
+        collection = types.InlineKeyboardButton(text='Посмотреть коллекцию', callback_data='fin_collection')
+        cancel = types.InlineKeyboardButton(text='Отменить', callback_data='fin_cancel')
+        markup.add(consultation, collection, cancel)
+        bot.send_message(message.chat.id, message_to_customer, parse_mode='html', reply_markup=markup)
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith('fin'))
+def handle_price(call):
+    if call.data == 'fin_consultation':
+        bot.send_message(call.message.chat.id, 'Укажите номер телефона, и наш флорист перезвонит Вам в течение 20 минут.', parse_mode='html')
+    elif call.data == 'fin_collection':
+        bot.send_message(call.message.chat.id, 'Готовые букеты для вас:')
+        for key, value in ready_made_posys().items():
+            script_path = pathlib.Path.cwd()
+            file_path = script_path.joinpath(f'flowershop/media/{value["picture"]}')
+            with open(file_path, 'rb') as posting_file:
+                bot.send_photo(
+                    call.message.chat.id,
+                    photo=posting_file,
+                    caption=f"{key}. {value['title']} \nЦена: {str(value['price'])} руб."
+                )
+    elif call.data == 'fin_cancel':
+        bot.send_message(call.message.chat.id, 'Если хотите выбрать другой букет, напишите сообщение "/start".')
+
+
+if __name__ == "__main__":
+    bot.polling(non_stop=True)
