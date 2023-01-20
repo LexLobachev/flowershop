@@ -1,6 +1,9 @@
 import telebot
 import os
 import pathlib
+import phonenumbers
+from phonenumbers import carrier
+from phonenumbers.phonenumberutil import number_type
 from telebot import types
 from dotenv import load_dotenv
 
@@ -145,7 +148,7 @@ def handle_user_adress(message):
 
 @bot.message_handler(content_types=['text'])
 def handle_user_delivery_time(message):
-    message = bot.send_message(message.chat.id, f'Спасибо за Ваш заказ. Если хотиете сделать друго, напишите сообщение: "/start" ',
+    message = bot.send_message(message.chat.id, f'Спасибо за Ваш заказ. Если хотите сделать другой заказ, напишите сообщение: "/start" ',
                                parse_mode='html')
     bot.register_next_step_handler(message, start)
 
@@ -177,14 +180,25 @@ def handle_user_choise(message):
         file_path = script_path.joinpath(f'media/posy_{message.text}.jpg')
         with open(file_path, 'rb') as posting_file:
             bot.send_photo(chat_id=message.chat.id, photo=posting_file)
-        message = bot.send_message(message.chat.id, 'Ваш букет. Если хотите выбрать другой букет, напишите сообщение "/start"',
-                         parse_mode='html')
-        bot.register_next_step_handler(message, start)
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1, one_time_keyboard=True)
+        order = types.KeyboardButton(text='Заказать букет')
+        other = types.KeyboardButton(text='Не подходит')
+        markup.add(order, other)
+        message = bot.send_message(message.chat.id, 'Ваш букет',
+                         parse_mode='html', reply_markup=markup)
+        bot. register_next_step_handler(message, handle_bouquet)
 
 
 @bot.message_handler(content_types=['text'])
 def handle_user_phone_number(message):
-    print('работает, накинуть функционал!')
+    try:
+        if carrier._is_mobile(number_type(phonenumbers.parse(message.text))):
+            bot.send_message(message.chat.id, 'Ваш номер был отправлен флористу')
+            print('отправить флористу')
+    except phonenumbers.phonenumberutil.NumberParseException:
+        message = bot.send_message(message.chat.id, 'Вами был введен неверный номер, попробуйте ввести через +7')
+        bot.register_next_step_handler(message, handle_user_phone_number)
+        pass
 
 
 if __name__ == "__main__":
