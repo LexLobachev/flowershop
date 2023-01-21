@@ -13,21 +13,21 @@ access_token = os.environ['TG_API_KEY']
 bot = telebot.TeleBot(access_token)
 
 def send_image(bot, call, pic_number):
-    script_path = pathlib.Path.cwd()
-    file_path = script_path.joinpath(f'media/posy_{pic_number}.jpg')
+    file_path = f'media/posy_{pic_number}.jpg'
     with open(file_path, 'rb') as posting_file:
         bot.send_photo(chat_id=call.message.chat.id, photo=posting_file)
 
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    message_to_customer = f'<b>{message.from_user.first_name}</b>, к какому событию готовитесь? Выберите один из вариантов, либо укажите свой'
+    message_to_customer = f'Здравствуйте, <b>{message.from_user.first_name}</b>! К какому событию хотите подобрать букет? Выберите один из вариантов, либо укажите свой'
     markup = types.InlineKeyboardMarkup()
     bday_button = types.InlineKeyboardButton('День рождения', callback_data= 'occ_birthday')
     wedding_button = types.InlineKeyboardButton('Свадьба', callback_data= 'occ_wedding')
     school_button = types.InlineKeyboardButton('Школа', callback_data= 'occ_school')
+    no_occation_button = types.InlineKeyboardButton('Нет повода', callback_data= 'occ_no')
     other_occation_button = types.InlineKeyboardButton('Другой повод', callback_data= 'occ_other')
-    markup.add(bday_button, wedding_button, school_button, other_occation_button)
+    markup.add(bday_button, wedding_button, school_button, no_occation_button, other_occation_button)
     bot.send_message(message.chat.id, message_to_customer, 
                       parse_mode='html', reply_markup=markup)
 
@@ -35,12 +35,12 @@ def start(message):
 @bot.callback_query_handler(func=lambda call: call.data.startswith('occ'))
 def handle_occation(call):
     prices = [
-        '~500', '~1000', '~2000', 'больше', 'не важно'
+        '~500 ₽', '~1000 ₽', '~2000 ₽', 'больше', 'не важно'
         ]
     if call.data == 'occ_birthday':
         markup = types.InlineKeyboardMarkup(row_width=3)
         for price in prices:
-            markup.add(types.InlineKeyboardButton(f'{price}', callback_data=f'price {price}'))
+            markup.add(types.InlineKeyboardButton(f'{price}', parse_mode='html', callback_data=f'price {price}'))
         message = bot.send_message(call.message.chat.id, 'Вы готовитесь ко дню рождения, на какую сумму вы рассчитываете?',
                          parse_mode='html', reply_markup=markup)
     elif call.data == 'occ_wedding':
@@ -54,6 +54,12 @@ def handle_occation(call):
         for price in prices:
             markup.add(types.InlineKeyboardButton(f'{price}', callback_data=f'price {price}'))
         message = bot.send_message(call.message.chat.id, 'Вы готовитесь к школе, на какую сумму вы рассчитываете?',
+                         parse_mode='html', reply_markup=markup)
+    elif call.data == 'occ_no':
+        markup = types.InlineKeyboardMarkup(row_width=3)
+        for price in prices:
+            markup.add(types.InlineKeyboardButton(f'{price}', callback_data=f'price {price}'))
+        message = bot.send_message(call.message.chat.id, 'Отсутствие повода - тоже повод! На какую сумму Вы рассчитываете?',
                          parse_mode='html', reply_markup=markup)
     elif call.data == 'occ_other':
         markup = types.InlineKeyboardMarkup(row_width=3)
@@ -83,19 +89,19 @@ def handle_price(call):
     order = types.KeyboardButton(text='Заказать букет')
     other = types.KeyboardButton(text='Не подходит')
     markup.add(order, other)
-    if call.data == 'price ~500':
+    if call.data == 'price ~500 ₽':
         pic_number = '1'
         real_price = '485'
         send_image(bot, call, pic_number)
         message = bot.send_message(call.message.chat.id, f'Ваш букет, стоимостью {real_price}', parse_mode='html', reply_markup=markup)
         bot.register_next_step_handler(message, handle_bouquet)
-    elif call.data == 'price ~1000':
+    elif call.data == 'price ~1000 ₽':
         pic_number = '2'
         real_price = '867'
         send_image(bot, call, pic_number)
         message = bot.send_message(call.message.chat.id, f'Ваш букет, стоимостью {real_price}', parse_mode='html', reply_markup=markup)
         bot.register_next_step_handler(message, handle_bouquet)
-    elif call.data == 'price ~2000':
+    elif call.data == 'price ~2000 ₽':
         pic_number = '3'
         real_price = '1658'
         send_image(bot, call, pic_number)
@@ -122,7 +128,7 @@ def handle_bouquet(message):
                                    parse_mode='html')
         bot.register_next_step_handler(message, handle_user_name)
     elif message.text == 'Не подходит':
-        message_to_customer = 'Хотите что-то еще более уникальное? Подберите другой букет из нашей коллекции или закажите консультацию флориста.'
+        message_to_customer = 'Хотите что-то более уникальное? Подберите другой букет из нашей коллекции или закажите консультацию флориста.'
         markup = types.InlineKeyboardMarkup(row_width=1)
         consultation = types.InlineKeyboardButton(text='Консультация специалиста', callback_data='fin_consultation')
         collection = types.InlineKeyboardButton(text='Посмотреть коллекцию', callback_data='fin_collection')
@@ -148,9 +154,22 @@ def handle_user_adress(message):
 
 @bot.message_handler(content_types=['text'])
 def handle_user_delivery_time(message):
-    message = bot.send_message(message.chat.id, f'Спасибо за Ваш заказ. Если хотите сделать другой заказ, напишите сообщение: "/start" ',
+    message = bot.send_message(message.chat.id, f'Номер телефона',
                                parse_mode='html')
-    bot.register_next_step_handler(message, start)
+    bot.register_next_step_handler(message, handle_user_phone)
+
+
+@bot.message_handler(content_types=['text'])
+def handle_user_phone(message):
+    try:
+        if carrier._is_mobile(number_type(phonenumbers.parse(message.text))) and len(message.text)==12:
+            message = bot.send_message(message.chat.id, f'Спасибо за Ваш заказ. Если хотите сделать другой заказ, напишите сообщение: "/start" ',
+                                       parse_mode='html')
+            bot.register_next_step_handler(message, start)
+    except:
+        message = bot.send_message(message.chat.id, 'Вами был введен неверный номер, попробуйте ввести через +7')
+        bot.register_next_step_handler(message, handle_user_phone)
+        pass
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('fin'))
@@ -165,7 +184,7 @@ def handle_not_aproach(call):
         for pic_number in range(1, pic_quantity+1):
             send_image(bot, call, str(pic_number))
             markup.add(types.KeyboardButton(text=f'{pic_number}'))
-        message = bot.send_message(call.message.chat.id, 'Какой из предложенных будетов Вас интересует?', reply_markup=markup)
+        message = bot.send_message(call.message.chat.id, 'Какой из предложенных букетов Вас интересует?', reply_markup=markup)
         bot.register_next_step_handler(message, handle_user_choise)
     elif call.data == 'fin_cancel':
         message = bot.send_message(call.message.chat.id, 'Если хотите выбрать другой букет, напишите сообщение "/start".')
@@ -176,8 +195,7 @@ def handle_not_aproach(call):
 def handle_user_choise(message):
     choises = set('12345')
     if  any((choise in choises) for choise in message.text):
-        script_path = pathlib.Path.cwd()
-        file_path = script_path.joinpath(f'media/posy_{message.text}.jpg')
+        file_path = f'media/posy_{message.text}.jpg'
         with open(file_path, 'rb') as posting_file:
             bot.send_photo(chat_id=message.chat.id, photo=posting_file)
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1, one_time_keyboard=True)
@@ -192,9 +210,13 @@ def handle_user_choise(message):
 @bot.message_handler(content_types=['text'])
 def handle_user_phone_number(message):
     try:
-        if carrier._is_mobile(number_type(phonenumbers.parse(message.text))):
-            bot.send_message(message.chat.id, 'Ваш номер был отправлен флористу')
-            print('отправить флористу')
+        if carrier._is_mobile(number_type(phonenumbers.parse(message.text))) and len(message.text)==12:
+            markup = types.InlineKeyboardMarkup()
+            collection_button = types.InlineKeyboardButton(text='Коллеция', callback_data='fin_collection')
+            cancel_button = types.InlineKeyboardButton(text='Отменить', callback_data='fin_cancel')
+            markup.add(collection_button, cancel_button)
+            bot.send_message(message.chat.id, 'Ваш номер был отправлен флористу. Желаете ознакомиться с коллецией, пока ждёте?',
+                             reply_markup=markup)
     except phonenumbers.phonenumberutil.NumberParseException:
         message = bot.send_message(message.chat.id, 'Вами был введен неверный номер, попробуйте ввести через +7')
         bot.register_next_step_handler(message, handle_user_phone_number)
