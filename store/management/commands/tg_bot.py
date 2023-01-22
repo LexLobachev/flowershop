@@ -1,3 +1,5 @@
+import ast
+
 import telebot
 import os
 import pathlib
@@ -54,6 +56,14 @@ def start(message):
     markup.add(bday_button, wedding_button, school_button, other_occation_button)
     bot.send_message(message.chat.id, message_to_customer, 
                       parse_mode='html', reply_markup=markup)
+    c, _ = Client.objects.update_or_create(
+        client_id=message.chat.id,
+        defaults={
+            'florist_key_id': 1,
+            'courier_key_id': 1
+        }
+    )
+    c.save()
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('occ'))
@@ -108,44 +118,32 @@ def handle_price(call):
     other = types.KeyboardButton(text='Не подходит')
     markup.add(order, other)
     if call.data == 'price ~500':
-        posy = Posy.objects.get(id=1)
-        pic_number = posy.id
-        real_price = posy.price
-        send_image(bot, call, pic_number)
-        message = bot.send_message(call.message.chat.id, f'Ваш букет, стоимостью {real_price}', parse_mode='html', reply_markup=markup)
-        bot.register_next_step_handler(message, handle_bouquet)
+        id_number = 1
     elif call.data == 'price ~1000':
-        posy = Posy.objects.get(id=2)
-        pic_number = posy.id
-        real_price = posy.price
-        send_image(bot, call, pic_number)
-        message = bot.send_message(call.message.chat.id, f'Ваш букет, стоимостью {real_price}', parse_mode='html', reply_markup=markup)
-        bot.register_next_step_handler(message, handle_bouquet)
+        id_number = 2
     elif call.data == 'price ~2000':
-        posy = Posy.objects.get(id=3)
-        pic_number = posy.id
-        real_price = posy.price
-        send_image(bot, call, pic_number)
-        message =bot.send_message(call.message.chat.id, f'Ваш букет, стоимостью {real_price}', parse_mode='html', reply_markup=markup)
-        bot.register_next_step_handler(message, handle_bouquet)
+        id_number = 3
     elif call.data == 'price больше':
-        posy = Posy.objects.get(id=4)
-        pic_number = posy.id
-        real_price = posy.price
-        send_image(bot, call, pic_number)
-        message = bot.send_message(call.message.chat.id, f'Ваш букет, стоимостью {real_price}', parse_mode='html', reply_markup=markup)
-        bot.register_next_step_handler(message, handle_bouquet)
+        id_number = 4
     elif call.data == 'price не важно':
-        posy = Posy.objects.get(id=5)
-        pic_number = posy.id
-        real_price = posy.price
-        send_image(bot, call, pic_number)
-        message = bot.send_message(call.message.chat.id, f'Ваш букет, стоимостью {real_price}', parse_mode='html', reply_markup=markup)
-        bot.register_next_step_handler(message, handle_bouquet)
+        id_number = 5
+    posy = Posy.objects.get(id=id_number)
+    pic_number = posy.id
+    real_price = posy.price
+    send_image(bot, call, pic_number)
+    message = bot.send_message(call.message.chat.id, f'Ваш букет, стоимостью {real_price}', parse_mode='html', reply_markup=markup)
+    bot.register_next_step_handler(message, handle_bouquet, pic_number)
 
 
 @bot.message_handler(content_types=['text'])
-def handle_bouquet(message):
+def handle_bouquet(message, pic_number):
+    c, _ = Client.objects.update_or_create(
+        client_id=message.chat.id,
+        defaults={
+            'posy_id': pic_number,
+        }
+    )
+    print(pic_number, 'its a chosen posy')
     if message.text == 'Заказать букет':
         message = bot.send_message(message.chat.id, f'Ваш заказ будет передан курьеру. Напишите ваши данные. Имя:',
                                    parse_mode='html')
@@ -162,7 +160,13 @@ def handle_bouquet(message):
 
 @bot.message_handler(content_types=['text'])
 def handle_user_name(message):
-    print(message.text)
+    c, _ = Client.objects.update_or_create(
+        client_id=message.chat.id,
+        defaults={
+            'full_name': message.text,
+        }
+    )
+    print(message.text, 'its full name saving')
     message = bot.send_message(message.chat.id, f'Адрес: ',
                                parse_mode='html')
     bot.register_next_step_handler(message, handle_user_adress)
@@ -170,6 +174,13 @@ def handle_user_name(message):
 
 @bot.message_handler(content_types=['text'])
 def handle_user_adress(message):
+    c, _ = Client.objects.update_or_create(
+        client_id=message.chat.id,
+        defaults={
+            'address': message.text,
+        }
+    )
+    print(message.text, 'its address saving')
     message = bot.send_message(message.chat.id, f'Желаемое время доставки',
                                parse_mode='html')
     bot.register_next_step_handler(message, handle_user_delivery_time)
@@ -177,6 +188,13 @@ def handle_user_adress(message):
 
 @bot.message_handler(content_types=['text'])
 def handle_user_delivery_time(message):
+    c, _ = Client.objects.update_or_create(
+        client_id=message.chat.id,
+        defaults={
+            'delivery_datetime': message.text,
+        }
+    )
+    print(message.text, 'its address saving')
     message = bot.send_message(message.chat.id, f'Спасибо за Ваш заказ. Если хотиете сделать друго, напишите сообщение: "/start" ',
                                parse_mode='html')
     bot.register_next_step_handler(message, start)
@@ -202,20 +220,27 @@ def handle_not_aproach(call):
                 )
                 markup.add(types.KeyboardButton(text=f'{key}'))
         message = bot.send_message(call.message.chat.id, 'Какой из предложенных будетов Вас интересует?', reply_markup=markup)
-        bot.register_next_step_handler(message, handle_user_choise)
+        bot.register_next_step_handler(message, handle_user_choice)
     elif call.data == 'fin_cancel':
         message = bot.send_message(call.message.chat.id, 'Если хотите выбрать другой букет, напишите сообщение "/start".')
         bot.register_next_step_handler(message, start)
 
 
 @bot.message_handler(content_types=['text'])
-def handle_user_choise(message):
-    choises = set('12345')
-    if any((choise in choises) for choise in message.text):
+def handle_user_choice(message):
+    choices = set('12345')
+    if any((choice in choices) for choice in message.text):
         script_path = pathlib.Path.cwd()
         file_path = script_path.joinpath(f'flowershop/media/posy_{message.text}.jpg')
         with open(file_path, 'rb') as posting_file:
             bot.send_photo(chat_id=message.chat.id, photo=posting_file)
+        c, _ = Client.objects.update_or_create(
+            client_id=message.chat.id,
+            defaults={
+                'posy_id': message.text,
+            }
+        )
+        print(message.text, 'its a chosen posy')
         message = bot.send_message(message.chat.id, 'Ваш букет. Если хотите выбрать другой букет, напишите сообщение "/start"',
                          parse_mode='html')
         bot.register_next_step_handler(message, start)
@@ -232,6 +257,13 @@ def handle_user_phone_number(message):
                                    parse_mode='html')
         bot.register_next_step_handler(message, handle_user_phone_number)
     if phonenumbers.is_valid_number(my_number):
+        c, _ = Client.objects.update_or_create(
+            client_id=message.chat.id,
+            defaults={
+                'phone_number': my_string_number,
+            }
+        )
+        print(my_string_number, 'its phone_number saving')
         message = bot.send_message(message.chat.id,
                                    f'Спасибо за ваш отклик. Для возврата в начальное меню нажмите: "/start" ',
                                    parse_mode='html')
