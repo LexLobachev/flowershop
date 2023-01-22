@@ -102,7 +102,6 @@ class Client(models.Model):
     )
     posy = models.ForeignKey(
         to="Posy",
-        verbose_name="Букет",
         on_delete=models.PROTECT,
         null=True
     )
