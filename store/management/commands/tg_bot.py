@@ -1,6 +1,7 @@
 import telebot
 import os
 import pathlib
+import phonenumbers
 
 from telebot import types
 from dotenv import load_dotenv
@@ -222,7 +223,24 @@ def handle_user_choise(message):
 
 @bot.message_handler(content_types=['text'])
 def handle_user_phone_number(message):
-    print('работает, накинуть функционал!')
+    my_string_number = message.text
+    try:
+        my_number = phonenumbers.parse(my_string_number)
+    except Exception as Err:
+        message = bot.send_message(message.chat.id,
+                                   f'Введен некорректный номер телефона. Попробуйте еще раз. {Err}',
+                                   parse_mode='html')
+        bot.register_next_step_handler(message, handle_user_phone_number)
+    if phonenumbers.is_valid_number(my_number):
+        message = bot.send_message(message.chat.id,
+                                   f'Спасибо за ваш отклик. Для возврата в начальное меню нажмите: "/start" ',
+                                   parse_mode='html')
+        bot.register_next_step_handler(message, start)
+    else:
+        message = bot.send_message(message.chat.id,
+                                   f'Введен некорректный номер телефона. Попробуйте еще раз',
+                                   parse_mode='html')
+        bot.register_next_step_handler(message, handle_user_phone_number)
 
 
 if __name__ == "__main__":
