@@ -46,6 +46,9 @@ class Florist(models.Model):
         blank=True,
     )
 
+    def __str__(self):
+        return self.full_name
+
 
 class Courier(models.Model):
     full_name = models.CharField(
@@ -58,6 +61,9 @@ class Courier(models.Model):
         null=True,
         blank=True,
     )
+
+    def __str__(self):
+        return self.full_name
 
 
 class Client(models.Model):
@@ -92,5 +98,11 @@ class Client(models.Model):
     courier_key = models.ForeignKey(
         "Courier",
         on_delete=models.CASCADE,
+        null=True
+    )
+    posy = models.ForeignKey(
+        to="Posy",
+        verbose_name="Букет",
+        on_delete=models.PROTECT,
         null=True
     )

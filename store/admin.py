@@ -21,5 +21,6 @@ class CourierAdmin(admin.ModelAdmin):
 
 @admin.register(Client)
 class ClientAdmin(admin.ModelAdmin):
-    list_display = ('client_id', 'full_name', 'phone_number', 'address', 'florist_key', 'courier_key', 'delivery_datetime')
+    list_display = ('client_id', 'full_name', 'phone_number', 'address', 'florist_key', 'courier_key',
+                    'delivery_datetime', 'posy')
     list_filter = ('client_id', 'phone_number')
