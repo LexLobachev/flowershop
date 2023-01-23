@@ -229,7 +229,6 @@ def handle_user_adress(message):
 
 @bot.message_handler(content_types=['text'])
 def handle_user_delivery_time(message):
-    message_to_customer = 'Спасибо за Ваш заказ. Если хотите сделать другой заказ, напишите сообщение: "/start".',
     c, _ = Client.objects.update_or_create(
         client_id=message.chat.id,
         defaults={
@@ -240,13 +239,25 @@ def handle_user_delivery_time(message):
     message = bot.send_message(message.chat.id,
                                f'Номер телефона: ',
                                parse_mode='html')
-    bot.register_next_step_handler(message, handle_user_phone_number, message_to_customer)
+    bot.register_next_step_handler(message, handle_user_phone)
+
+
+@bot.message_handler(content_types=['text'])
+def handle_user_phone(message):
+    try:
+        if carrier._is_mobile(number_type(phonenumbers.parse(message.text))) and len(message.text)==12:
+            message = bot.send_message(message.chat.id, f'Спасибо за Ваш заказ. Если хотите сделать другой заказ, напишите сообщение: "/start" ',
+                                       parse_mode='html')
+            bot.register_next_step_handler(message, start)
+    except:
+        message = bot.send_message(message.chat.id, 'Вами был введен неверный номер, попробуйте ввести через +7')
+        bot.register_next_step_handler(message, handle_user_phone)
+        pass
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('fin'))
 def handle_not_aproach(call):
     if call.data == 'fin_consultation':
-        message_to_customer = 'Спасибо за ваш отклик. Пока ожидаете звонка, предлагаем Вам ознакомиться со всей коллекцией.'
         message_to_customer = 'Укажите номер телефона, и наш флорист перезвонит Вам в течение 20 минут.'
         message = bot.send_message(call.message.chat.id,
                                    message_to_customer,
@@ -304,24 +315,17 @@ def handle_user_choice(message):
 
 
 @bot.message_handler(content_types=['text'])
-def handle_user_phone_number(message, message_to_customer):
-    my_string_number = message.text
+def handle_user_phone_number(message):
     try:
-        my_number = phonenumbers.parse(my_string_number)
-    except Exception as Err:
-        message = bot.send_message(message.chat.id,
-                                   f'Введен некорректный номер телефона. Попробуйте еще раз. {Err}',
-                                   parse_mode='html')
-        bot.register_next_step_handler(message, handle_user_phone_number)
-    if phonenumbers.is_valid_number(my_number):
-        c, _ = Client.objects.update_or_create(
+        if carrier._is_mobile(number_type(phonenumbers.parse(message.text))) and len(message.text)==12:
+            my_string_number = message.text
+            c, _ = Client.objects.update_or_create(
             client_id=message.chat.id,
             defaults={
                 'phone_number': my_string_number,
             }
-        )
-        print(my_string_number, 'its phone_number saving')
-        if message_to_customer == 'Спасибо за ваш отклик. Пока ожидаете звонка, предлагаем Вам ознакомиться со всей коллекцией.':
+            )
+            print(my_string_number, 'its phone_number saving')
             markup = types.InlineKeyboardMarkup()
             collection_button = types.InlineKeyboardButton(text='Коллеция',
                                                            callback_data='fin_collection')
@@ -329,19 +333,17 @@ def handle_user_phone_number(message, message_to_customer):
                                                        callback_data='fin_cancel')
             markup.add(collection_button, cancel_button)
             message = bot.send_message(message.chat.id,
-                                       message_to_customer,
+                                       'Спасибо за ваш отклик. Пока ожидаете звонка, предлагаем Вам ознакомиться со всей коллекцией.',
                                        parse_mode='html',
                                        reply_markup=markup)
-        elif message_to_customer == 'Спасибо за Ваш заказ. Если хотите сделать другой заказ, напишите сообщение: "/start".':
-            message = bot.send_message(message.chat.id,
-                                       message_to_customer,
-                                       parse_mode='html',)
+            
+            message = bot.send_message(message.chat.id, f'Спасибо за Ваш заказ. Если хотите сделать другой заказ, напишите сообщение: "/start" ',
+                                       parse_mode='html')
             bot.register_next_step_handler(message, start)
-    else:
-        message = bot.send_message(message.chat.id,
-                                   f'Введен некорректный номер телефона. Попробуйте еще раз',
-                                   parse_mode='html')
+    except:
+        message = bot.send_message(message.chat.id, 'Вами был введен неверный номер, попробуйте ввести через +7')
         bot.register_next_step_handler(message, handle_user_phone_number)
+        pass
 
 
 if __name__ == "__main__":
