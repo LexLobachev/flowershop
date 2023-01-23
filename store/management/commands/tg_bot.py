@@ -114,12 +114,10 @@ def handle_occation(call):
                                    parse_mode='html',
                                    reply_markup=markup)
     elif call.data == 'occ_other':
-        markup = types.InlineKeyboardMarkup(row_width=3)
         message_to_customer = 'Опишите кратко Ваш случай.'
         message = bot.send_message(call.message.chat.id,
                                    message_to_customer,
-                                   parse_mode='html',
-                                   reply_markup=markup)
+                                   parse_mode='html')
         bot.register_next_step_handler(message, handle_other_occation)
 
 
@@ -262,7 +260,7 @@ def handle_not_aproach(call):
         message = bot.send_message(call.message.chat.id,
                                    message_to_customer,
                                    parse_mode='html')
-        bot.register_next_step_handler(message, handle_user_phone_number, message_to_customer)
+        bot.register_next_step_handler(message, handle_user_phone_number)
     elif call.data == 'fin_collection':
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2, one_time_keyboard=True)
         bot.send_message(call.message.chat.id,
@@ -336,10 +334,6 @@ def handle_user_phone_number(message):
                                        'Спасибо за ваш отклик. Пока ожидаете звонка, предлагаем Вам ознакомиться со всей коллекцией.',
                                        parse_mode='html',
                                        reply_markup=markup)
-            
-            message = bot.send_message(message.chat.id, f'Спасибо за Ваш заказ. Если хотите сделать другой заказ, напишите сообщение: "/start" ',
-                                       parse_mode='html')
-            bot.register_next_step_handler(message, start)
     except:
         message = bot.send_message(message.chat.id, 'Вами был введен неверный номер, попробуйте ввести через +7')
         bot.register_next_step_handler(message, handle_user_phone_number)
