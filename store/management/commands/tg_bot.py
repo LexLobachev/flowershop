@@ -333,11 +333,9 @@ def handle_user_phone_number(message, message_to_customer):
                                        parse_mode='html',
                                        reply_markup=markup)
         elif message_to_customer == 'Спасибо за Ваш заказ. Если хотите сделать другой заказ, напишите сообщение: "/start".':
-            markup.add(collection_button, cancel_button)
             message = bot.send_message(message.chat.id,
                                        message_to_customer,
-                                       parse_mode='html',
-                                       reply_markup=markup)
+                                       parse_mode='html',)
             bot.register_next_step_handler(message, start)
     else:
         message = bot.send_message(message.chat.id,
