@@ -244,6 +244,14 @@ def handle_user_delivery_time(message):
 def handle_user_phone(message):
     try:
         if carrier._is_mobile(number_type(phonenumbers.parse(message.text))) and len(message.text)==12:
+            my_string_number = message.text
+            c, _ = Client.objects.update_or_create(
+            client_id=message.chat.id,
+            defaults={
+                'phone_number': my_string_number,
+            }
+            )
+            print(my_string_number, 'its phone_number saving')
             message = bot.send_message(message.chat.id, f'Спасибо за Ваш заказ. Если хотите сделать другой заказ, напишите сообщение: "/start" ',
                                        parse_mode='html')
             bot.register_next_step_handler(message, start)
