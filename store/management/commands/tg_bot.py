@@ -31,7 +31,7 @@ bot = telebot.TeleBot(access_token)
 def ready_made_posys():
     ready_posys = {}
     for num, posy in enumerate(Posy.objects.order_by('id')[:5]):
-        ready_posys[num+1] = {
+        ready_posys[num + 1] = {
             "title": posy.title,
             "picture": posy.picture,
             "description": posy.description,
@@ -63,7 +63,7 @@ def start(message):
                                                        callback_data='occ_other')
     markup.add(bday_button, wedding_button, school_button, no_occation_button, other_occation_button)
     bot.send_message(message.chat.id,
-                     message_to_customer, 
+                     message_to_customer,
                      parse_mode='html',
                      reply_markup=markup)
     c, _ = Client.objects.update_or_create(
@@ -80,7 +80,7 @@ def start(message):
 def handle_occation(call):
     prices = [
         '~500 ₽', '~1000 ₽', '~2000 ₽', 'больше', 'не важно'
-        ]
+    ]
     if call.data == 'occ_birthday':
         markup = types.InlineKeyboardMarkup(row_width=3)
         for price in prices:
@@ -243,13 +243,13 @@ def handle_user_delivery_time(message):
 @bot.message_handler(content_types=['text'])
 def handle_user_phone(message):
     try:
-        if carrier._is_mobile(number_type(phonenumbers.parse(message.text))) and len(message.text)==12:
+        if carrier._is_mobile(number_type(phonenumbers.parse(message.text))) and len(message.text) == 12:
             my_string_number = message.text
             c, _ = Client.objects.update_or_create(
-            client_id=message.chat.id,
-            defaults={
-                'phone_number': my_string_number,
-            }
+                client_id=message.chat.id,
+                defaults={
+                    'phone_number': my_string_number,
+                }
             )
             print(my_string_number, 'its phone_number saving')
             message = bot.send_message(message.chat.id, f'Спасибо за Ваш заказ. Если хотите сделать другой заказ, напишите сообщение: "/start" ',
@@ -323,13 +323,13 @@ def handle_user_choice(message):
 @bot.message_handler(content_types=['text'])
 def handle_user_phone_number(message):
     try:
-        if carrier._is_mobile(number_type(phonenumbers.parse(message.text))) and len(message.text)==12:
+        if carrier._is_mobile(number_type(phonenumbers.parse(message.text))) and len(message.text) == 12:
             my_string_number = message.text
             c, _ = Client.objects.update_or_create(
-            client_id=message.chat.id,
-            defaults={
-                'phone_number': my_string_number,
-            }
+                client_id=message.chat.id,
+                defaults={
+                    'phone_number': my_string_number,
+                }
             )
             print(my_string_number, 'its phone_number saving')
             markup = types.InlineKeyboardMarkup()
