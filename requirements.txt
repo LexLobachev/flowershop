@@ -3,3 +3,4 @@ pyTelegramBotAPI==4.9.0
 python-dotenv==0.21.0
 Pillow==9.4.0
 phonenumbers==8.13.4
+environs==9.5.0
